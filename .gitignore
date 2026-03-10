@@ -1,0 +1,13 @@
+# Build output
+main.js
+
+# npm
+node_modules/
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
