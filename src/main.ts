@@ -102,8 +102,8 @@ export default class OpenInClaudeCode extends Plugin {
 		const escaped = dir.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 		const script =
 			'tell application "Terminal"\n' +
-			"activate\n" +
 			'do script "cd \\"' + escaped + '\\" && claude"\n' +
+			"activate\n" +
 			"end tell";
 
 		exec(
