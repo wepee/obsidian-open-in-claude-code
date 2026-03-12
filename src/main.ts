@@ -6,25 +6,24 @@ import * as fs from "fs/promises";
 const CLAUDE_ICON = `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="translate(0.5,11) scale(1.5)"><rect x="0" y="13" width="6" height="13" fill="currentColor"/><rect x="60" y="13" width="6" height="13" fill="currentColor"/><rect x="6" y="39" width="6" height="13" fill="currentColor"/><rect x="18" y="39" width="6" height="13" fill="currentColor"/><rect x="42" y="39" width="6" height="13" fill="currentColor"/><rect x="54" y="39" width="6" height="13" fill="currentColor"/><rect x="6" width="54" height="39" fill="currentColor"/><rect x="12" y="13" width="6" height="6.5" fill="var(--background-primary, black)"/><rect x="48" y="13" width="6" height="6.5" fill="var(--background-primary, black)"/></g></svg>`;
 
 export default class OpenInClaudeCode extends Plugin {
-	async onload(): Promise<void> {
+	onload(): void {
 		addIcon("claude", CLAUDE_ICON);
 
-		this.addRibbonIcon("claude", "Open in Claude Code", () => {
-			this.openInDirectory();
+		this.addRibbonIcon("claude", "Open in Claude code", () => {
+			void this.openInDirectory();
 		});
 
 		this.addCommand({
 			id: "open-dir",
-			name: "Open current directory in Claude Code",
-			callback: () => this.openInDirectory(),
+			name: "Open current directory in Claude code",
+			callback: () => void this.openInDirectory(),
 		});
 
 		this.addCommand({
 			id: "open-vault-root",
-			name: "Open vault root in Claude Code",
-			callback: () => this.openInVaultRoot(),
+			name: "Open vault root in Claude code",
+			callback: () => void this.openInVaultRoot(),
 		});
-
 	}
 
 	private getVaultPath(): string {
