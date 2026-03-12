@@ -5,8 +5,6 @@ import * as fs from "fs/promises";
 
 const CLAUDE_ICON = `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><g transform="translate(0.5,11) scale(1.5)"><rect x="0" y="13" width="6" height="13" fill="currentColor"/><rect x="60" y="13" width="6" height="13" fill="currentColor"/><rect x="6" y="39" width="6" height="13" fill="currentColor"/><rect x="18" y="39" width="6" height="13" fill="currentColor"/><rect x="42" y="39" width="6" height="13" fill="currentColor"/><rect x="54" y="39" width="6" height="13" fill="currentColor"/><rect x="6" width="54" height="39" fill="currentColor"/><rect x="12" y="13" width="6" height="6.5" fill="var(--background-primary, black)"/><rect x="48" y="13" width="6" height="6.5" fill="var(--background-primary, black)"/></g></svg>`;
 
-const SKIP_DIRS = new Set(["node_modules", ".obsidian", ".trash", ".git"]);
-
 export default class OpenInClaudeCode extends Plugin {
 	async onload(): Promise<void> {
 		addIcon("claude", CLAUDE_ICON);
@@ -27,18 +25,6 @@ export default class OpenInClaudeCode extends Plugin {
 			callback: () => this.openInVaultRoot(),
 		});
 
-		this.addCommand({
-			id: "sync-plugins",
-			name: "Sync Claude Code plugins across vault",
-			callback: async () => {
-				const count = await this.syncEnabledPlugins();
-				new Notice(
-					count > 0
-						? `Synced Claude plugins to ${count} subdirectories`
-						: "All subdirectories already in sync",
-				);
-			},
-		});
 	}
 
 	private getVaultPath(): string {
@@ -57,107 +43,59 @@ export default class OpenInClaudeCode extends Plugin {
 			dir = this.getVaultPath();
 		}
 
-		await this.syncEnabledPlugins();
+		await this.ensurePlugins(dir);
 		this.launchClaude(dir);
 	}
 
 	private async openInVaultRoot(): Promise<void> {
-		await this.syncEnabledPlugins();
-		this.launchClaude(this.getVaultPath());
+		const vaultPath = this.getVaultPath();
+		await this.ensurePlugins(vaultPath);
+		this.launchClaude(vaultPath);
 	}
 
-	private async syncEnabledPlugins(): Promise<number> {
-		const vaultPath = this.getVaultPath();
-		const rootSettingsPath = path.join(vaultPath, ".claude", "settings.json");
-
-		let rootPlugins: Record<string, boolean>;
+	private async getRootPlugins(): Promise<Record<string, boolean> | null> {
+		const rootSettingsPath = path.join(this.getVaultPath(), ".claude", "settings.json");
 		try {
 			const raw = await fs.readFile(rootSettingsPath, "utf-8");
 			const parsed = JSON.parse(raw);
-			rootPlugins = parsed?.enabledPlugins;
-		} catch {
-			return 0;
-		}
-
-		if (!rootPlugins || Object.keys(rootPlugins).length === 0) {
-			return 0;
-		}
-
-		const childSettingsPaths = await this.findChildClaudeSettings(
-			vaultPath,
-			rootSettingsPath,
-		);
-
-		let updatedCount = 0;
-
-		for (const settingsPath of childSettingsPaths) {
-			try {
-				const raw = await fs.readFile(settingsPath, "utf-8");
-				const parsed = JSON.parse(raw);
-				const current = parsed.enabledPlugins ?? {};
-
-				const needsUpdate = Object.entries(rootPlugins).some(
-					([key, value]) => current[key] !== value,
-				);
-
-				if (needsUpdate) {
-					parsed.enabledPlugins = { ...current, ...rootPlugins };
-					await fs.writeFile(
-						settingsPath,
-						JSON.stringify(parsed, null, 2),
-					);
-					updatedCount++;
-				}
-			} catch {
-				console.warn(
-					`Open in Claude Code: skipping malformed ${settingsPath}`,
-				);
+			const plugins = parsed?.enabledPlugins;
+			if (plugins && Object.keys(plugins).length > 0) {
+				return plugins;
 			}
+		} catch {
+			// no root settings
 		}
-
-		return updatedCount;
+		return null;
 	}
 
-	private async findChildClaudeSettings(
-		dir: string,
-		rootSettingsPath: string,
-	): Promise<string[]> {
-		const results: string[] = [];
+	private async ensurePlugins(dir: string): Promise<boolean> {
+		const vaultPath = this.getVaultPath();
+		if (dir === vaultPath) return false;
 
-		let entries;
+		const rootPlugins = await this.getRootPlugins();
+		if (!rootPlugins) return false;
+
+		const settingsPath = path.join(dir, ".claude", "settings.json");
+
+		let parsed: Record<string, unknown> = {};
 		try {
-			entries = await fs.readdir(dir, { withFileTypes: true });
+			const raw = await fs.readFile(settingsPath, "utf-8");
+			parsed = JSON.parse(raw);
 		} catch {
-			return results;
+			// file doesn't exist or is malformed — we'll create it
 		}
 
-		for (const entry of entries) {
-			if (!entry.isDirectory() || SKIP_DIRS.has(entry.name)) {
-				continue;
-			}
+		const current = (parsed.enabledPlugins ?? {}) as Record<string, boolean>;
+		const needsUpdate = Object.entries(rootPlugins).some(
+			([key, value]) => current[key] !== value,
+		);
 
-			const fullPath = path.join(dir, entry.name);
+		if (!needsUpdate) return false;
 
-			if (entry.name === ".claude") {
-				const settingsPath = path.join(fullPath, "settings.json");
-				if (settingsPath !== rootSettingsPath) {
-					try {
-						await fs.access(settingsPath);
-						results.push(settingsPath);
-					} catch {
-						// no settings.json here
-					}
-				}
-			} else {
-				const children = await this.findChildClaudeSettings(
-					fullPath,
-					rootSettingsPath,
-				);
-				results.push(...children);
-			}
-		}
-
-		return results;
+		parsed.enabledPlugins = { ...current, ...rootPlugins };
+		await fs.mkdir(path.join(dir, ".claude"), { recursive: true });
+		await fs.writeFile(settingsPath, JSON.stringify(parsed, null, 2));
+		return true;
 	}
 
 	private launchClaude(dir: string): void {

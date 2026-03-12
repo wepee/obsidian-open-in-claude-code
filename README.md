@@ -8,6 +8,7 @@ An [Obsidian](https://obsidian.md) plugin that launches [Claude Code](https://do
 - **Command palette** — Two commands available:
   - *Open current directory in Claude Code* — Opens the parent directory of the active note.
   - *Open vault root in Claude Code* — Opens the vault root directory.
+- **Auto-sync plugins** — Before each launch, the plugin ensures that the target directory inherits all `enabledPlugins` from the vault root's `.claude/settings.json`. If the directory doesn't have its own `.claude/settings.json`, one is created automatically.
 
 ## Requirements
 
