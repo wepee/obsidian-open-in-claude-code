@@ -9,19 +9,19 @@ export default class OpenInClaudeCode extends Plugin {
 	onload(): void {
 		addIcon("claude", CLAUDE_ICON);
 
-		this.addRibbonIcon("claude", "Open in Claude code", () => {
+		this.addRibbonIcon("claude", "Open in claude code", () => {
 			void this.openInDirectory();
 		});
 
 		this.addCommand({
 			id: "open-dir",
-			name: "Open current directory in Claude code",
+			name: "Open current directory in claude code",
 			callback: () => void this.openInDirectory(),
 		});
 
 		this.addCommand({
 			id: "open-vault-root",
-			name: "Open vault root in Claude code",
+			name: "Open vault root in claude code",
 			callback: () => void this.openInVaultRoot(),
 		});
 	}
