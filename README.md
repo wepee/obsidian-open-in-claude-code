@@ -2,6 +2,9 @@
 
 An [Obsidian](https://obsidian.md) plugin that launches [Claude Code](https://docs.anthropic.com/en/docs/claude-code) in the directory of the current note or at the vault root.
 
+<img width="174" height="122" alt="image" src="https://github.com/user-attachments/assets/59d13fd4-8abb-419a-be72-b59518644a9c" />
+
+
 ## Features
 
 - **Ribbon icon** — Click the Claude icon in the left sidebar to open Claude Code in the active note's directory.
