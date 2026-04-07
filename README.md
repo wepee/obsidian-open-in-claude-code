@@ -28,7 +28,7 @@ An [Obsidian](https://obsidian.md) plugin that launches [Claude Code](https://do
 
 ### Manual
 
-1. Download `main.js` and `manifest.json` from the [latest release](https://github.com/wepee/open-in-claude-code/releases/latest).
+1. Download `main.js` and `manifest.json` from the [latest release](https://github.com/wepee/obsidian-open-in-claude-code/releases/latest).
 2. Create a folder `open-in-claude-code` inside your vault's `.obsidian/plugins/` directory.
 3. Copy both files into that folder.
 4. Reload Obsidian and enable the plugin in **Settings → Community plugins**.
